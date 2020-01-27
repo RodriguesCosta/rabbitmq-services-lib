@@ -34,7 +34,7 @@ class ServicesLib {
   private firstInit = true
   private consumes: { [queue: string]: onMessageType; } = {}
 
-  public constructor({ exchange, prefetch = 1 }: { exchange: string; prefetch: number }) {
+  public constructor({ exchange, prefetch = 1 }: { exchange: string; prefetch?: number }) {
     this.exchange = exchange;
     this.prefetch = prefetch;
     this.init();
