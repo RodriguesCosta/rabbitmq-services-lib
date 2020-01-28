@@ -7,6 +7,7 @@ interface SendToQueueInterface {
   delay?: number;
   awaitResponse?: boolean;
   extraData?: string;
+  timeOut?: number;
 }
 
 type onMessageType = (msg: ConsumeMessage) => any
@@ -32,6 +33,7 @@ class ServicesLib {
   private exchange: string
   private prefetch = 1
   private firstInit = true
+  private defaultTimeOut = 30000
   private consumes: { [queue: string]: onMessageType; } = {}
 
   public constructor({ exchange, prefetch = 1 }: { exchange: string; prefetch?: number }) {
@@ -150,12 +152,17 @@ class ServicesLib {
   /**
    * Consome fila de resposta baseado no replyTo
    * @param replyTo
+   * @param timeOut
    */
-  private async consumeQueueRPC(replyTo: string): Promise<any> {
+  private async consumeQueueRPC(replyTo: string, timeOut: number): Promise<any> {
+    if (timeOut <= 0) {
+      throw new Error('Time out...');
+    }
+
     if (!this.channel) {
       console.log('Erro RABBITMQ canal não existe tentando novamente em 1 segundo...');
       await this.sleep(1000);
-      return this.consumeQueueRPC(replyTo);
+      return this.consumeQueueRPC(replyTo, timeOut - 1000);
     }
 
     try {
@@ -171,7 +178,7 @@ class ServicesLib {
       //caso ainda não tenha nenhuma menssagem aguarda 100ms para tentar buscar de novo
       if (!response) {
         await this.sleep(100);
-        return this.consumeQueueRPC(replyTo);
+        return this.consumeQueueRPC(replyTo, timeOut - 100);
       }
 
       //deleta a fila temporaria de maneira assincrona (sem um await)
@@ -185,7 +192,7 @@ class ServicesLib {
       console.log('Erro ao conectar na fila tentando novamente em 1 segundo...');
       //caso aconteça algum erro ele tenta registrar o consumidor da fila depois de 1 segundo
       await this.sleep(1000);
-      return this.consumeQueueRPC(replyTo);
+      return this.consumeQueueRPC(replyTo, timeOut - 1000);
     }
   }
 
@@ -267,7 +274,7 @@ class ServicesLib {
     let awaitResponse;
     if (options.awaitResponse) {
       optionsPub.replyTo = uuidv4();
-      awaitResponse = this.consumeQueueRPC(optionsPub.replyTo);
+      awaitResponse = this.consumeQueueRPC(optionsPub.replyTo, options.timeOut ? options.timeOut : this.defaultTimeOut);
     }
 
     if (options.extraData) {
