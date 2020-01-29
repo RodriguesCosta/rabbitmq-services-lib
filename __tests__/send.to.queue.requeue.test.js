@@ -6,6 +6,8 @@ const servicesLib = new ServicesLib({
 
 test('deve ser enviado uma menssagem feito um requeue dela e aceitala na segunda vez', async () => {
 
+  jest.setTimeout(12000);
+
   let result;
   let requeued = false;
   let countConsumer = 0;
@@ -19,7 +21,7 @@ test('deve ser enviado uma menssagem feito um requeue dela e aceitala na segunda
     countConsumer++;
     if (!requeued) {
       requeued = true;
-      servicesLib.reQueueMessage(msg, 1000);
+      servicesLib.reQueueMessage(msg, 2000);
       return;
     }
 
@@ -28,7 +30,7 @@ test('deve ser enviado uma menssagem feito um requeue dela e aceitala na segunda
     servicesLib.aproveMessage(msg);
   });
 
-  await servicesLib.sleep(3000);
+  await servicesLib.sleep(10000);
   await servicesLib.close();
   expect([result, requeued, countConsumer]).toStrictEqual([true, true, 2]);
 });

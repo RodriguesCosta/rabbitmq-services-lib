@@ -34,9 +34,10 @@ class ServicesLib {
   private prefetch = 1
   private firstInit = true
   private defaultTimeOut = 30000
+  private defaultTtl = 3600000
   private consumes: { [queue: string]: onMessageType; } = {}
 
-  public constructor({ exchange, prefetch = 1 }: { exchange: string; prefetch?: number }) {
+  public constructor({ exchange, prefetch = 1 }: { exchange: string; prefetch?: number; }) {
     this.exchange = exchange;
     this.prefetch = prefetch;
     this.init();
@@ -64,11 +65,8 @@ class ServicesLib {
       //Tenta se conectar cria um canal e uma exchange
       this.connection = await connect(this.connectUri, this.connectOptions);
       this.channel = await this.connection.createChannel();
-      await this.channel.assertExchange(this.exchange, 'x-delayed-message', {
+      await this.channel.assertExchange(this.exchange, 'topic', {
         durable: true,
-        arguments: {
-          'x-delayed-type': 'topic',
-        },
       });
 
       //seta o numero de evento que as filas dessa conexão podem pegar
@@ -256,6 +254,10 @@ class ServicesLib {
    * @param message
    */
   public async sendToQueue(options: SendToQueueInterface): Promise<any> {
+    if (options.awaitResponse && options.delay > 0) {
+      throw new Error('Não pode ser definido delay em menssagens que aguardam resposta...');
+    }
+
     //caso o canal não exista ele tenta registrar a mensagem na fila depois de 1 segundo
     //para caso a conexão for estabelecida a mensagem seja registrada
     if (!this.channel) {
@@ -264,11 +266,19 @@ class ServicesLib {
       return this.sendToQueue(options);
     }
 
-    let msgHeaders: any = {};
+    let queueName = options.queue;
+    const queueOptions: Options.AssertQueue = {
+      durable: true,
+    };
 
     const optionsPub: Options.Publish = {};
     if (options.delay && options.delay > 0) {
-      msgHeaders['x-delay'] = options.delay;
+      optionsPub.expiration = options.delay;
+      queueName = `${options.queue}.delay`;
+
+      queueOptions.deadLetterExchange = this.exchange;
+      queueOptions.deadLetterRoutingKey = options.queue;
+      queueOptions.messageTtl = this.defaultTtl;
     }
 
     let awaitResponse;
@@ -278,20 +288,20 @@ class ServicesLib {
     }
 
     if (options.extraData) {
-      msgHeaders['extraData'] = options.extraData;
+      optionsPub.headers = {
+        extraData: options.extraData,
+      };
     }
-
-    optionsPub.headers = msgHeaders;
 
     try {
       //registra a fila no servidor caso não exista
-      const q = await this.channel.assertQueue(options.queue, { durable: true });
+      const q = await this.channel.assertQueue(queueName, queueOptions);
 
       //faz a ligação com a fila
-      await this.channel.bindQueue(q.queue, this.exchange, options.queue);
+      await this.channel.bindQueue(q.queue, this.exchange, queueName);
 
       //publica de fato a mensagem na fila, obrigatoriamente a mensagem deve ser enviada como um buffer
-      await this.channel.publish(this.exchange, options.queue, options.messageBuffer, optionsPub);
+      await this.channel.publish(this.exchange, queueName, options.messageBuffer, optionsPub);
     } catch (error) {
       console.log('Erro ao enviar para a fila tentando novamente em 1 segundo...');
       //caso aconteça algum erro ele tenta registrar a mensagem na fila depois de 1 segundo
