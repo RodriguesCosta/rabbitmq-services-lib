@@ -6,7 +6,7 @@ const servicesLib = new ServicesLib({
 
 it('deve ser enviado 2 menssagens e a segunda deve ser processada primeiro pois ela nao vai ter delay e a primeira vai ter', async () => {
 
-  jest.setTimeout(12000);
+  jest.setTimeout(20000);
 
   const arrayDelaySend = [12, 17];
   const arrayDelayCompare = [];
@@ -27,7 +27,7 @@ it('deve ser enviado 2 menssagens e a segunda deve ser processada primeiro pois 
     messageBuffer: Buffer.from(JSON.stringify({ number: arrayDelaySend[0] })),
   });
 
-  await servicesLib.sleep(7000);
+  await servicesLib.sleep(12000);
   await servicesLib.close();
   expect(arrayDelayCompare).toStrictEqual(arrayDelaySend);
 });

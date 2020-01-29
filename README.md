@@ -10,7 +10,9 @@ Deve ser adicionada as seguintes variaveis de ambiente.
 - RABBITMQ_PASS=auto explicativo
 - RABBITMQ_CERT=string base64 do certificado do serviço obrigatorio caso use 'amqps' no RABBITMQ_PROTOCOL
 
-#### ATENÇÃO! Essa biblioteca foi feita para ser usada juntamente com o plugin [rabbitmq_delayed_message_exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange), caso tenha dificuldades em configurar, use minha imagem docker, [rabbitmq-management-delayed-message-exchange](https://github.com/RodriguesCosta/rabbitmq-management-delayed-message-exchange).
+#### ATENÇÃO! Até a versão 1.1.8 essa biblioteca foi feita para ser usada juntamente com o plugin [rabbitmq_delayed_message_exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange), caso tenha dificuldades em configurar, use minha imagem docker, [rabbitmq-management-delayed-message-exchange](https://github.com/RodriguesCosta/rabbitmq-management-delayed-message-exchange).
+
+#### Versão >= 1.1.9 Apartir dessa versão a opção de delay não usa mais o plugin [rabbitmq_delayed_message_exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) para controle do delay, isso foi alterado devido algumas limitações do mesmo, agora usamos uma abordagem nativa 'x-dead-letter-routing-key'.
 
 ## Instalação
 

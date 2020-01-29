@@ -8,7 +8,7 @@ const servicesLibPrefetch = new ServicesLib({
   prefetch: 5,
 });
 
-it('deve ser enviado 6 menssagens e o 2 consumidor deve receber 5 pois vai ter um prefetch maior', async () => {
+it('deve ser enviado 6 menssagens e o consumidor dois deve receber 5 pois vai ter um prefetch maior', async () => {
 
   jest.setTimeout(10000);
 
