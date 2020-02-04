@@ -14,11 +14,11 @@
     "prepublish": "tsc"
   },
   "dependencies": {
+    "@types/amqplib": "^0.5.13",
     "amqplib": "^0.5.5",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.5.13",
     "@sucrase/jest-plugin": "^2.0.0",
     "@types/jest": "^24.0.20",
     "@types/uuid": "^3.4.5",
